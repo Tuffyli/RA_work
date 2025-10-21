@@ -1,6 +1,13 @@
+# ---------------------------------------------------------------------------- #
+# Data Manipulation
+# DataBase adjustment
+# Last edited by: Tuffy Licciardi Issa
+# Date: 05/09/2025
+# ---------------------------------------------------------------------------- #
 
-
-# Library ----
+# ---------------------------------------------------------------------------- #
+# Libraries -----
+# ---------------------------------------------------------------------------- #
 
 library(tidyverse)
 library(data.table)
@@ -12,16 +19,18 @@ library(readxl)
 
 
 # ---------------------------------------------------------------------------- #
-# Bases preliminares -----
+# Preliminary Data -----
 # ---------------------------------------------------------------------------- #
 
 
 #Capturando a população
+#[English: Capturing population data]
 
 censopop <- readxl::read_xlsx("Z:/Tuffy/Paper - HVSUS/Bases/pop_anual.xlsx")
 
 
 # Base de distâncias
+#[English: Distances database]
 mun_hv <- readRDS(file = "Z:/Arquivos IFB/Paper - Horário de Verão e Educação/V2 Horário de Verão e ENEM/Bases de dados/revisao/mun_hv.RDS")
 
 conv <- read_dta("Z:/Tuffy/Paper - Brasil/amcs.dta") %>% 
@@ -30,12 +39,13 @@ conv <- read_dta("Z:/Tuffy/Paper - Brasil/amcs.dta") %>%
 
 
 # Coordenadas
+#[English: Coordenates]
 coordenadas <- mun_hv$centroid %>%
   st_coordinates() %>%
   as_tibble() %>%
   rename(
-    lon = X,
-    lat = Y
+    lon = X, #Extracting the Longitude 
+    lat = Y  #Extracting the Latitude
   )
 
 mun_hv <- mun_hv %>%
@@ -159,7 +169,7 @@ rm(coordenadas, conv)
 
 # ---------------------------------------------------------------------------- #
 
-#2. 2018 - 2019 HV ----
+#2. 2018 - 2019 DST ----
 
 for (ano in 2013:2019) {
   
@@ -167,6 +177,7 @@ for (ano in 2013:2019) {
   
   
   #Abertura da Base unificada
+  #[English: Combined data opening]
   temp <- readRDS(paste0(
     "Z:/Arquivos IFB/DATASUS/SIH/R/SIH_",ano,".rds"
   ))
@@ -179,6 +190,7 @@ for (ano in 2013:2019) {
   
   
   #Alocando as classificações CID-10
+  #[English: Allocating the CID-10 classifications]
   temp <- temp %>%
 #    filter(DT_INTER != 12356283) %>% 
     mutate(
@@ -202,6 +214,7 @@ for (ano in 2013:2019) {
       diag_prefix = substr(DIAG_PRINC, 1, 3),
       
       #classificando a CID10
+      #[English: Classifing the CID-10]
       cid10 = case_when(
         grepl("^A", diag_prefix) & as.numeric(substr(diag_prefix, 2,3)) <= 99 ~ 1, #Doenças infecciosas e parasitárias
         grepl("^B", diag_prefix) & as.numeric(substr(diag_prefix, 2,3)) <= 99 ~ 1, #Doenças infecciosas e parasitárias
@@ -288,6 +301,11 @@ for (ano in 2013:2019) {
       )
     ) 
   
+  
+  #' Since the DST has different start dates for every year, I try to capture the
+  #' reference starting date for each year inside the database.
+  #' Note that the value selected for 2019 is not its real start since in 2019 it
+  #' was officially ended in Brazil.
   
   if (ano == 2019) {
     
@@ -498,8 +516,9 @@ for (ano in 2013:2019) {
 
 
 
-#2. Casos ----
+#2. Cases ----
 #Para extrair a população
+#[English: Extracting the population]
 com_pop <- censopop %>% 
   select(codmun, as.character(2018), as.character(2019)) %>% 
   left_join(mun_hv %>% 
@@ -511,7 +530,7 @@ com_pop <- censopop %>%
     pop19 = as.character(2019)
   )
 
-## 2.1 Homicidio ----
+## 2.1 Homicide ----
 
 base_hm <- read.csv2("Z:/Tuffy/Paper - HVSUS/Bases/SIH/SIH_2018_2019_hom.csv")
 
@@ -569,7 +588,7 @@ base_hm <- base_hm %>%
   
   
   
-## 2.2 Externas ----
+## 2.2 External Causes ----
   
   base_hm <- read.csv2("Z:/Tuffy/Paper - HVSUS/Bases/SIH/SIH_2018_2019_cext.csv")
   
@@ -630,11 +649,9 @@ base_hm <- base_hm %>%
   
   
 # ---------------------------------------------------------------------------- #  
-#3. Casos outros anos:
-  
-  
-  #2. Casos ----
+  #3. Cases ----
   #Para extrair a população
+  #[English: Capturing population data]
   com_pop <- censopop %>% 
     select(codmun, as.character(2018), as.character(2019),
            as.character(2017), as.character(2016), as.character(2015),
@@ -653,7 +670,7 @@ base_hm <- base_hm %>%
       pop13 = as.character(2013)
     )
   
-  ## 2.1 Homicidio ----
+  ## 3.1 Homicide ----
   
   base_hm <- read.csv2("Z:/Tuffy/Paper - HVSUS/Bases/SIH/SIH_Hom_1319.csv")
   
@@ -779,7 +796,7 @@ base_hm <- base_hm %>%
   
   
   
-  ## 2.2 Externas ----
+  ## 3.2 External ----
   
   base_hm <- read.csv2("Z:/Tuffy/Paper - HVSUS/Bases/SIH/SIH_Total_1319.csv")
   
@@ -910,7 +927,7 @@ base_hm <- base_hm %>%
   
   
   
-  ## 2.3 Transito ----
+  ## 3.3 Transit ----
   
   base_hm <- read.csv2("Z:/Tuffy/Paper - HVSUS/Bases/SIH/SIH_Tran_1319.csv")
   
@@ -1037,15 +1054,12 @@ base_hm <- base_hm %>%
   
   
   
-  # ---------------------------------------------------------------------------- #  
-  
-  
-  
+# ---------------------------------------------------------------------------- #  
 # SIM Database ---------
 # ---------------------------------------------------------------------------- #
 
 #temp <- read.csv2("Z:/Arquivos IFB/DATASUS/SIM/OpenDataSUS/Mortalidade_Geral_2019.csv")
-## 1.1 Geral ----
+## 1.1 General ----
 
 
 for (ano in 2018:2019) {
@@ -1054,6 +1068,7 @@ for (ano in 2018:2019) {
   
   
   #Abertura da Base unificada
+  #[English: Combined database]
   temp <- read.csv2(paste0(
     "Z:/Arquivos IFB/DATASUS/SIM/OpenDataSUS/Mortalidade_Geral_",ano,".csv"
   ))
@@ -1066,6 +1081,7 @@ for (ano in 2018:2019) {
   
   
   #Alocando as classificações CID-10
+  #[English: Allocating CID-10 classifications]
   temp <- temp %>% 
     mutate(
       
@@ -1087,6 +1103,7 @@ for (ano in 2018:2019) {
        diag_prefix = substr(CAUSABAS, 1, 3),
        
        #classificando a CID10
+       #[English: Classifing within CID-10]
       cid10 = case_when(
         grepl("^A", diag_prefix) & as.numeric(substr(diag_prefix, 2,3)) <= 99 ~ 1, #Doenças infecciosas e parasitárias
         grepl("^B", diag_prefix) & as.numeric(substr(diag_prefix, 2,3)) <= 99 ~ 1, #Doenças infecciosas e parasitárias
@@ -1220,7 +1237,7 @@ for (ano in 2018:2019) {
   rm(temp, temp_df, ano)
 }
 
-##1.2 2013 - 2019 HV ----
+##1.2 2013 - 2019 DST ----
 
 for (ano in 2013:2019) {
   
@@ -1228,6 +1245,7 @@ for (ano in 2013:2019) {
   
   
   #Abertura da Base unificada
+  #[English: Combined database]
   temp <- read.csv2(paste0(
     "Z:/Arquivos IFB/DATASUS/SIM/OpenDataSUS/Mortalidade_Geral_",ano,".csv"
   ))
@@ -1240,6 +1258,7 @@ for (ano in 2013:2019) {
   
   
   #Alocando as classificações CID-10
+  #[English: Allocaring the CID-10 classifications]
   temp <- temp %>% 
     mutate(
       
@@ -1261,6 +1280,7 @@ for (ano in 2013:2019) {
       diag_prefix = substr(CAUSABAS, 1, 3),
       
       #classificando a CID10
+      #[English: Classifing CID-10]
       cid10 = case_when(
         grepl("^A", diag_prefix) & as.numeric(substr(diag_prefix, 2,3)) <= 99 ~ 1, #Doenças infecciosas e parasitárias
         grepl("^B", diag_prefix) & as.numeric(substr(diag_prefix, 2,3)) <= 99 ~ 1, #Doenças infecciosas e parasitárias
@@ -1349,8 +1369,7 @@ for (ano in 2013:2019) {
   
   
   
-  #Time to HV
-
+  #Time to DST
   
   if (ano == 2019) {
     
