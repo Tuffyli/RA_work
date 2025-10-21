@@ -1,5 +1,13 @@
 # ---------------------------------------------------------------------------- #
-# Library ----- 
+# Main regressiom
+# Last edited by: Tuffy Licciardi Issa
+# Date: 03/09/2025
+# ---------------------------------------------------------------------------- #
+
+# ---------------------------------------------------------------------------- #
+# Libraries -----
+# ---------------------------------------------------------------------------- #
+
 
 library(tidyverse)
 library(data.table)
@@ -24,6 +32,18 @@ library(knitr)
 library(stargazer)
 
 # ****************** ----
+# ---------------------------------------------------------------------------- #
+#' DISCLAIMER:
+#' For all data regarding homicide and hospilatization in DATASUS there are two
+#' different municipal code values:
+#' 
+#' - Municipality of Occurrence, labeled as [OCO]
+#' - Municipality of Residence, labeled as [RES] 
+#'
+#' Therefore, all regressions made in this script are repeated for both municipal
+#' codes available.
+# ----------------------------------------------------------------------------- #
+
 #SIM ----
 
 # ---------------------------------------------------------------------------- #
@@ -60,7 +80,7 @@ arrange(co_municipio,year) %>%
          dist_hv_border = ifelse(hv == 1, dist_hv_border, -dist_hv_border)) %>%
   setDT()
 
-## 1.2 Controles ----
+## 1.2 Controls ----
 # Dependent variable
 yv <- base %>%
   filter(year == 2019) %>% 
@@ -134,6 +154,7 @@ list[[as.character(paste0(2019,"-",2018,"|NH"))]] <- rdrobust(
 rm(clu, latv, lonv, ef, xv, yv, yv2)
 # ---------------------------------------------------------------------------- #
 #Extração da banda ótima
+#[English: Optimal bandwidth extraction]
 bw_main_a  <- list[["2019-2018|H"]]$bws[1]
 bw_bias_a  <- list[["2019-2018|H"]]$bws[2]
 
@@ -143,8 +164,6 @@ bw_bias_b  <- list[["2019-2018|NH"]]$bws[2]
 
 
 ## 1.4 Table ----
-
-
 tab <- data.frame(
   coef = do.call(rbind,lapply(list, FUN = function(x){x$coef[3]})),
   se = do.call(rbind,lapply(list, FUN = function(x){x$se[3]})),
@@ -279,6 +298,7 @@ list_res[[as.character(paste0(2019,"-",2018,"|NH"))]] <- rdrobust(
 rm(clu, latv, lonv, ef, xv, yv, yv2)
 # ---------------------------------------------------------------------------- #
 #Extração da banda ótima
+#[English: Optimal bandwidth extraction]
 bw_main_c  <- list_res[["2019-2018|H"]]$bws[1]
 bw_bias_c  <- list_res[["2019-2018|H"]]$bws[2]
 
@@ -315,7 +335,7 @@ tab2 <- tab2 %>%
 
 
 
-##1.9 RESULTADOS -----
+##1.9 RESULTS -----
 names <- c("2019 - 2018",
            " "," ")
 
@@ -331,6 +351,7 @@ result <- data.frame(
 
 
 #Mun de Ocorrência
+#[English: Occurence Municipality]
 result$hcor[1] <- tab$coef[[1]]
 result$hcor[2] <- tab$se[[1]]
 result$hcor[3] <- tab$N[[1]]
@@ -340,6 +361,7 @@ result$nhcor[2] <- tab$se[[2]]
 result$nhcor[3] <- tab$N[[2]]
 
 #Mun de res
+#[English: Residency municipality]
 result$hres[1] <- tab2$coef[[1]]
 result$hres[2] <- tab2$se[[1]]
 result$hres[3] <- tab2$N[[1]]
@@ -354,6 +376,7 @@ result$nhres[3] <- tab2$N[[2]]
 colnames(result) <- c("", "(1)", "(2)", "(3)", "(4)")
 
 # Cria a tabela LaTeX
+#[English: Creating a LaTeX table]
 latex_table <- knitr::kable(
   result,
   format = "latex",
@@ -416,6 +439,7 @@ ef <- dummy_cols(clu$seg)
 ef <- ef %>% select(-1,-2)
 
 # Estimando parâmetros do gráfico
+#[English: Estimating each graph parameter]
 fig <- rdplot(y = yv$vd,
               x = xv$dist_hv_border,
               c = 0,
@@ -436,6 +460,7 @@ rm(yv, xv, clu, latv, lonv, ef, temp)
 
 
 # Vetores e valores auxiliares
+#[English: Vectors and auxiliatory values]
 fig$vars_bins$hv <- fig$vars_bins$rdplot_mean_x >= 1
 fig$vars_poly$hv <- fig$vars_poly$rdplot_x >= 1
 
@@ -456,7 +481,7 @@ y_l_end <- ifelse(fig$coef[1,1] > fig$coef[1,2],
 
 xtips <- seq(-5*10^5,5*10^5,10^5)
 
-# Gráfico
+# Graph
 fig_gg <- ggplot() +
   geom_point(data = fig$vars_bins, aes(x = rdplot_mean_x, y = rdplot_mean_y, color = factor(hv)),
              alpha = 0.5, size = 2, show.legend = FALSE) + 
@@ -493,6 +518,10 @@ rm(fig,fig_gg,x_r_sta,x_r_end,x_l_sta,x_l_end,y_r_sta,y_r_end,y_l_sta,y_l_end,xt
 
 
 ##2.2 New Hom ----
+#' In this section I utilize a new homicide variable
+
+
+
 fig <- list()
 
 temp <- base %>% 
@@ -537,6 +566,7 @@ ef <- dummy_cols(clu$seg)
 ef <- ef %>% select(-1,-2)
 
 # Estimando parâmetros do gráfico
+#[English: Estimating the graph parameters]
 fig <- rdplot(y = yv$vd,
               x = xv$dist_hv_border,
               c = 0,
@@ -557,6 +587,7 @@ rm(yv, xv, clu, latv, lonv, ef, temp)
 
 
 # Vetores e valores auxiliares
+#[English: Vectors and auxiliatory variables]
 fig$vars_bins$hv <- fig$vars_bins$rdplot_mean_x >= 1
 fig$vars_poly$hv <- fig$vars_poly$rdplot_x >= 1
 
@@ -577,7 +608,7 @@ y_l_end <- ifelse(fig$coef[1,1] > fig$coef[1,2],
 
 xtips <- seq(-5*10^5,5*10^5,10^5)
 
-# Gráfico
+# Graph
 fig_gg <- ggplot() +
   geom_point(data = fig$vars_bins, aes(x = rdplot_mean_x, y = rdplot_mean_y, color = factor(hv)),
              alpha = 0.5, size = 2, show.legend = FALSE) + 
@@ -660,6 +691,7 @@ ef <- dummy_cols(clu$seg)
 ef <- ef %>% select(-1,-2)
 
 # Estimando parâmetros do gráfico
+#[English: Estimating the graph parameters]
 fig <- rdplot(y = yv$vd,
               x = xv$dist_hv_border,
               c = 0,
@@ -680,6 +712,7 @@ rm(yv, xv, clu, latv, lonv, ef, temp)
 
 
 # Vetores e valores auxiliares
+#[English: Vectors and auxiliatory variables]
 fig$vars_bins$hv <- fig$vars_bins$rdplot_mean_x >= 1
 fig$vars_poly$hv <- fig$vars_poly$rdplot_x >= 1
 
@@ -700,7 +733,7 @@ y_l_end <- ifelse(fig$coef[1,1] > fig$coef[1,2],
 
 xtips <- seq(-5*10^5,5*10^5,10^5)
 
-# Gráfico
+# Graph
 fig_gg <- ggplot() +
   geom_point(data = fig$vars_bins, aes(x = rdplot_mean_x, y = rdplot_mean_y, color = factor(hv)),
              alpha = 0.5, size = 2, show.legend = FALSE) + 
@@ -781,6 +814,7 @@ ef <- dummy_cols(clu$seg)
 ef <- ef %>% select(-1,-2)
 
 # Estimando parâmetros do gráfico
+#[English: Estimating the graph parameters]
 fig <- rdplot(y = yv$vd,
               x = xv$dist_hv_border,
               c = 0,
@@ -801,6 +835,7 @@ rm(yv, xv, clu, latv, lonv, ef, temp)
 
 
 # Vetores e valores auxiliares
+#[English: Vectors and auxiliatory variables]
 fig$vars_bins$hv <- fig$vars_bins$rdplot_mean_x >= 1
 fig$vars_poly$hv <- fig$vars_poly$rdplot_x >= 1
 
@@ -821,7 +856,7 @@ y_l_end <- ifelse(fig$coef[1,1] > fig$coef[1,2],
 
 xtips <- seq(-5*10^5,5*10^5,10^5)
 
-# Gráfico
+# Graph
 fig_gg <- ggplot() +
   geom_point(data = fig$vars_bins, aes(x = rdplot_mean_x, y = rdplot_mean_y, color = factor(hv)),
              alpha = 0.5, size = 2, show.legend = FALSE) + 
@@ -861,7 +896,7 @@ rm(fig,fig_gg,x_r_sta,x_r_end,x_l_sta,x_l_end,y_r_sta,y_r_end,y_l_sta,y_l_end,xt
 
 
 # ---------------------------------------------------------------------------- #
-#3. Outras vars ----
+#3. Other Variable ----
 ## *** OCO *** ----
 
 base <- readRDS(file = paste0("Z:/Tuffy/Paper - HVSUS/Bases/SIM/SIM_hv_oco_2018.rds")) %>%
@@ -945,7 +980,7 @@ rm(ef,var)
 
 
 
-##3.1 Tab ----
+##3.1 Table ----
 
 
 tab <- data.frame(
@@ -985,24 +1020,29 @@ result <- data.frame(
 
 
 #Transito
+#[English: Transit]
 result$tra[1] <- tab$coef[[1]]
 result$tra[2] <- tab$se[[1]]
 result$tra[3] <- tab$N[[1]]
 #Cardio
+#[English: Cardiovasculatory]
 result$crd[1] <- tab$coef[[2]]
 result$crd[2] <- tab$se[[2]]
 result$crd[3] <- tab$N[[2]]
 
 #Cardio Total
+#[English: Total Cardiovasculatory]
 result$crt[1] <- tab$coef[[3]]
 result$crt[2] <- tab$se[[3]]
 result$crt[3] <- tab$N[[3]]
 
 #Externas
+#[English: External Causes]
 result$ext[1] <- tab$coef[[4]]
 result$ext[2] <- tab$se[[4]]
 result$ext[3] <- tab$N[[4]]
 #Lesões Externas
+#[English: External Injuries]
 result$lxt[1] <- tab$coef[[4]]
 result$lxt[2] <- tab$se[[4]]
 result$lxt[3] <- tab$N[[4]]
@@ -1013,6 +1053,7 @@ result$lxt[3] <- tab$N[[4]]
 colnames(result) <- c("", "(1)", "(2)", "(3)", "(4)", "(5)")
 
 # Cria a tabela LaTeX
+#[English: Crearing LaTeX Table]
 latex_table <- knitr::kable(
   result,
   format = "latex",
