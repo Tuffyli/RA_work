@@ -1,7 +1,9 @@
 # Daylight Saving Time (Brazil) — Research Projects
 
-This directory groups two related projects studying consequences of the **end of Daylight Saving Time (DST) in Brazil**.  
+This directory groups two related projects studying the consequences of the **end of Daylight Saving Time (DST) in Brazil**.  
 Both projects are implemented for **reproducible pipelines** (data prep → estimation → figures) using DiD/event-study frameworks and robustness checks.
+
+**Methods.** The main assessment method is the newly developed **Difference-in-Discontinuities (DiDisc)** design. We implement it following the specification and inference procedures in [“Difference-in-Discontinuities” (arXiv:2405.18531)](https://arxiv.org/abs/2405.18531). Intuitively, DiDisc differences the RD discontinuity **before vs. after** the policy, isolating the causal shift attributable to the reform.
 
 ---
 
@@ -9,13 +11,13 @@ Both projects are implemented for **reproducible pipelines** (data prep → esti
 
 1. **[DST-ENEM](./DST-ENEM/)**  
    Examines how the DST policy change relates to performance in **high-stakes exams (ENEM)**.  
-   - Data: exam microdata + timing/calendar information (restricted); synthetic stubs where possible.  
-   - Methods: DiD / event-study, heterogeneous effects, robustness to alternative windows.
+   - Data: exam microdata + timing/calendar information (restricted).  
+   - Methods: **Difference-in-Discontinuities** (Diff-in-Disc) and **Geographic Regression Discontinuity Design** (Geographical RDD).
 
 2. **[DST-Homicides-Labor](./DST-Homicides-Labor/)**  
    Investigates effects around **public safety (homicides)** and **labor outcomes**.  
    - Data: administrative crime statistics and labor market series (mixed access).  
-   - Methods: stacked DiD, seasonality controls, placebo checks, sensitivity analysis.
+   - Methods: **Difference-in-Discontinuities** (Diff-in-Disc) and **Geographic Regression Discontinuity Design** (Geographical RDD).
 
 ---
 
