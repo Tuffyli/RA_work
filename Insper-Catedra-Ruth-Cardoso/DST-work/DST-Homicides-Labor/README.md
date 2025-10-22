@@ -16,7 +16,7 @@ To keep the repo lean and compliant, **datasets are not included** (some are lar
 Place local copies under a non-tracked folder (e.g., `data/`) and update paths at the top of the scripts.
 
 ## Quick start
-1. Open **[Scripts](./Scripts/)** and follow the numbered run order (e.g., `01_*` → `02_*` → `03_*`).
+1. Open **[Scripts](./Scripts/)** and follow the numbered run order (e.g., `1.*` → `2.*` → `3.*`).
 2. Edit local paths and toggles (synthetic vs. restricted) as indicated in the headers.
 3. Outputs (tables/figures) are written to `./Reports/` or `./outputs/`.
 
