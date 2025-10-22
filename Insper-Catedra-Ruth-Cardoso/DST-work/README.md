@@ -3,7 +3,7 @@
 This directory groups two related projects studying the consequences of the **end of Daylight Saving Time (DST) in Brazil**.  
 Both projects are implemented for **reproducible pipelines** (data prep → estimation → figures) using DiD/event-study frameworks and robustness checks.
 
-**Methods.** The main assessment method is the newly developed **Difference-in-Discontinuities (DiDisc)** design. We implement it following the specification and inference procedures in [“Difference-in-Discontinuities” (arXiv:2405.18531)](https://arxiv.org/abs/2405.18531). Intuitively, DiDisc differences the RD discontinuity **before vs. after** the policy, isolating the causal shift attributable to the reform.
+**Methods.** The main assessment method is the newly developed **Difference-in-Discontinuities (DiDisc)** design. We implement it following the specification and inference procedures in [“Difference-in-Discontinuities: Estimation, Inference and Validity Tests” by Picchetti, Pinto and Shinoki (2024)](https://arxiv.org/abs/2405.18531). Intuitively, DiDisc differences the RD discontinuity **before vs. after** the policy, isolating the causal shift attributable to the reform.
 
 ---
 
