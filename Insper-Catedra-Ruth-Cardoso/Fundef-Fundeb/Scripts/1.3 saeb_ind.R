@@ -130,8 +130,12 @@ for (idx in seq(1, length(paths_list), by = 2)) {
         ),
         idade_aux = ifelse(idade == 10, 1, 0), #Ideal age in 4th/5th grade
         
-        treat_exp = 0 #Treatment exposition
-      )
+        treat_exp = 0, #Treatment exposition
+      
+        codmun = paste0(substr(municipio_codmunic, 1, 2),
+                        substr(municipio_codmunic, 8, 11))
+        
+        )
     
     df2 <- df2 %>% 
       select(municipio_codmunic, id_uf, municipio, nome_esc, cod_escola,
@@ -162,14 +166,20 @@ for (idx in seq(1, length(paths_list), by = 2)) {
         ),
         idade_aux = ifelse(idade == 14, 1, 0), #Ideal age in 8th/9th grade
         
-        treat_exp = 0 #Treatment exposition
-      )
+        treat_exp = 0, #Treatment exposition
+      
+        codmun = NA
+        )
     
     df_bind <- rbind(df1, df2) %>% 
       mutate(ano = year) %>% 
-      filter(!is.na(idade)) %>% 
-      rename(codmun = municipio_codmunic) %>% 
-      select(-c(municipio, nome_esc, cod_escola, disc, dep_admin)) %>% 
+      filter(!is.na(idade)) %>%
+      group_by(municipio, id_uf) %>% 
+      mutate(
+        codmun = ifelse(serie == 8, codmun[serie == 4], codmun)
+      ) %>% 
+      ungroup() %>% 
+      select(-c(municipio, municipio_codmunic, nome_esc, cod_escola, disc, dep_admin)) %>% 
       mutate( #Other control variables
         
         sexo = as.character(sexo),
@@ -655,6 +665,8 @@ for (idx in seq(1, length(paths_list), by = 2)) {
   
   rm(df_bind, idx, ini, fim, delta, mins, secs, path_a, path_b, year, df1, df2, pair_index)
 }
+
+
 
 #Saving final dataset
 saveRDS(df_final, "Z:/Tuffy/Paper - Educ/Dados/saeb_nvl_aluno.rds")
