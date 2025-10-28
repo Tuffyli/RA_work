@@ -415,28 +415,3 @@ etable(mat_dos, por_dos,
        headers = list(":_:" = list("Matemática" = 1,"Português" = 1)),
        file = "Z:/Tuffy/Paper - Educ/Resultados/Tabelas/Dosage/roberto_individuo_abbe.tex", replace = TRUE)
 
-### 4.2.2 Aluno Dosage ----
-
-
-
-mat_dos <- feols(as.numeric(profic_mat) ~   i(anos_exp, grupo, ref = 0)
-                 + sexo + raca + mae_educ + idade + PIBpc #Controls
-                 | codmun + ano + uf^ano, #FE
-                 data = df %>% filter(grade == 5), #Only 5h grade
-                 #weights = df %>% filter(grade == 5) %>% select(peso),
-                 vcov = "hetero")
-
-por_dos <- feols(as.numeric(profic_port) ~  i(anos_exp, grupo, ref = 0)
-                 + sexo + raca + mae_educ + idade + PIBpc #Controls
-                 | codmun + ano + uf^ano, #FE
-                 data = df %>% filter(grade == 5), #Only 5h grade
-                 #weights = df %>% filter(grade == 5) %>% select(peso),
-                 vcov = "hetero")
-
-etable(mat_dos,por_dos)
-
-etable(mat_dos, por_dos,
-       vcov = "hetero",
-       headers = list(":_:" = list("Matemática" = 1,"Português" = 1)),
-       file = "Z:/Tuffy/Paper - Educ/Resultados/Tabelas/Dosage_aluno/roberto_aluno_individuo_abbe.tex", replace = TRUE)
-
