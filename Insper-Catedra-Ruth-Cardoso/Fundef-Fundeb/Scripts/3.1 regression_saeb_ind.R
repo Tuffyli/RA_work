@@ -191,14 +191,14 @@ rm(main_mat, main_pot, sec_mat, sec_pot)
 ### 2.2.1 Age exp ----
 
 main_mat <- feols(as.numeric(profic_mat) ~ aluno_dosage : age_exp
-                  + sexo + raca + mae_educ + PIBpc + idade #Controls
+                  + sexo + raca + mae_educ + PIBpc   #Controls
                   | codmun + ano + uf^ano, #FE
                   data = df %>% filter(grade == 5), #Only 5h grade
                   #weights = df_saeb$peso_5,
                   vcov = "hetero")
 
 main_pot <- feols(as.numeric(profic_port) ~ aluno_dosage : age_exp
-                  + sexo + raca + mae_educ + PIBpc + idade #Controls
+                  + sexo + raca + mae_educ + PIBpc  #Controls
                   | codmun + ano + uf^ano, #FE
                   data = df %>% filter(grade == 5), #Only 5h grade
                   #weights = df_saeb$peso_5,
@@ -291,3 +291,152 @@ etable(main_dist, sec_dist,
        vcov = "hetero",
        headers = list(":_:" = list("5°Ano" = 1,"9°Ano" = 1)),
        file = "Z:/Tuffy/Paper - Educ/Resultados/Tabelas/Dosage/dist_individuo_anos_exp.tex", replace = TRUE)
+
+# ---------------- #
+## 3.2 Aluno Dosage ----
+
+main_dist <- feols(as.numeric(age_late) ~ aluno_dosage : i(anos_exp, ref = 0)
+                   + sexo + raca + mae_educ + idade + PIBpc #Controls
+                   | codmun + ano + uf^ano, #FE
+                   data = df %>% filter(grade == 5), #Only 5h grade
+                   #weights = df %>% filter(grade == 5) %>% select(peso),
+                   vcov = "hetero")
+
+
+sec_dist <- feols(as.numeric(age_late) ~ aluno_dosage : i(anos_exp, ref = 0)
+                  + sexo + raca + mae_educ + idade + PIBpc 
+                  | codmun + ano + uf^ano,
+                  data = df %>% filter(grade == 9),
+                  #weights = df$peso,
+                  vcov = "hetero")
+
+
+etable(main_dist, sec_dist)
+etable(main_dist, sec_dist,
+       vcov = "hetero",
+       headers = list(":_:" = list("5°Ano" = 1,"9°Ano" = 1)),
+       file = "Z:/Tuffy/Paper - Educ/Resultados/Tabelas/Dosage_aluno/dist_individuo_anos_exp.tex", replace = TRUE)
+
+
+
+rm(main_dist, sec_dist)
+# ---------------------------------------------------------------------------- #
+# 4. Above vs. Below ----
+# ---------------------------------------------------------------------------- #
+#' Here I will create an auxiliar dummy indicating if the municipality is placed
+#' into the group of beneficiary or contributer
+
+df <- df %>% 
+  mutate(grupo = case_when(
+    dosage > 0 ~ "Above",   # net beneficiary
+    dosage < 0 ~ "Below",   # net contributer
+    TRUE ~ NA_character_
+    ),
+    grupo = factor(grupo, levels = c("Below", "Above"))) #Beneficiary dummy
+
+## 4.1 Ref. Specification ----
+#' This specification is more similar to the Rudi Rocha reference paper, regar-
+#' ding the health spending policy change in Brazil. In a similar way from the
+#' authors, I will divide the group into Above and Below, meaning the ones that
+#' received more from the policy change and the ones that presented losses.
+
+### 4.1.1 Dosage ----
+
+mat_dos <- feols(as.numeric(profic_mat) ~ dosage : i(anos_exp, grupo, ref = 0)
+                  + sexo + raca + mae_educ + idade + PIBpc #Controls
+                  | codmun + ano + uf^ano, #FE
+                  data = df %>% filter(grade == 5), #Only 5h grade
+                  #weights = df %>% filter(grade == 5) %>% select(peso),
+                  vcov = "hetero")
+
+por_dos <- feols(as.numeric(profic_port) ~ dosage : i(anos_exp, grupo, ref = 0)
+                  + sexo + raca + mae_educ + idade + PIBpc #Controls
+                  | codmun + ano + uf^ano, #FE
+                  data = df %>% filter(grade == 5), #Only 5h grade
+                  #weights = df %>% filter(grade == 5) %>% select(peso),
+                  vcov = "hetero")
+
+etable(mat_dos,por_dos)
+etable(mat_dos, por_dos,
+       vcov = "hetero",
+       headers = list(":_:" = list("Matemática" = 1,"Português" = 1)),
+       file = "Z:/Tuffy/Paper - Educ/Resultados/Tabelas/Dosage/rudi_individuo_abbe.tex", replace = TRUE)
+
+
+### 4.1.1 Dosage ----
+
+mat_dos <- feols(as.numeric(profic_mat) ~ aluno_dosage : i(anos_exp, grupo, ref = 0)
+                 + sexo + raca + mae_educ + idade + PIBpc #Controls
+                 | codmun + ano + uf^ano, #FE
+                 data = df %>% filter(grade == 5), #Only 5h grade
+                 #weights = df %>% filter(grade == 5) %>% select(peso),
+                 vcov = "hetero")
+
+por_dos <- feols(as.numeric(profic_port) ~ aluno_dosage : i(anos_exp, grupo, ref = 0)
+                 + sexo + raca + mae_educ + idade + PIBpc #Controls
+                 | codmun + ano + uf^ano, #FE
+                 data = df %>% filter(grade == 5), #Only 5h grade
+                 #weights = df %>% filter(grade == 5) %>% select(peso),
+                 vcov = "hetero")
+
+etable(mat_dos,por_dos)
+etable(mat_dos, por_dos,
+       vcov = "hetero",
+       headers = list(":_:" = list("Matemática" = 1,"Português" = 1)),
+       file = "Z:/Tuffy/Paper - Educ/Resultados/Tabelas/Dosage_aluno/rudi_aluno_individuo_abbe.tex", replace = TRUE)
+
+rm(mat_dos, por_dos)
+## 4.2 Roberto Ref ----
+#' This specification follows the estimation model from FUNDEF impact in educa-
+#' tion study.
+
+### 4.2.1 Dosage ----
+
+
+
+mat_dos <- feols(as.numeric(profic_mat) ~   i(anos_exp, grupo, ref = 0)
+                 + sexo + raca + mae_educ + idade + PIBpc #Controls
+                 | codmun + ano + uf^ano, #FE
+                 data = df %>% filter(grade == 5), #Only 5h grade
+                 #weights = df %>% filter(grade == 5) %>% select(peso),
+                 vcov = "hetero")
+
+por_dos <- feols(as.numeric(profic_port) ~  i(anos_exp, grupo, ref = 0)
+                 + sexo + raca + mae_educ + idade + PIBpc #Controls
+                 | codmun + ano + uf^ano, #FE
+                 data = df %>% filter(grade == 5), #Only 5h grade
+                 #weights = df %>% filter(grade == 5) %>% select(peso),
+                 vcov = "hetero")
+
+etable(mat_dos,por_dos)
+
+etable(mat_dos, por_dos,
+       vcov = "hetero",
+       headers = list(":_:" = list("Matemática" = 1,"Português" = 1)),
+       file = "Z:/Tuffy/Paper - Educ/Resultados/Tabelas/Dosage/roberto_individuo_abbe.tex", replace = TRUE)
+
+### 4.2.2 Aluno Dosage ----
+
+
+
+mat_dos <- feols(as.numeric(profic_mat) ~   i(anos_exp, grupo, ref = 0)
+                 + sexo + raca + mae_educ + idade + PIBpc #Controls
+                 | codmun + ano + uf^ano, #FE
+                 data = df %>% filter(grade == 5), #Only 5h grade
+                 #weights = df %>% filter(grade == 5) %>% select(peso),
+                 vcov = "hetero")
+
+por_dos <- feols(as.numeric(profic_port) ~  i(anos_exp, grupo, ref = 0)
+                 + sexo + raca + mae_educ + idade + PIBpc #Controls
+                 | codmun + ano + uf^ano, #FE
+                 data = df %>% filter(grade == 5), #Only 5h grade
+                 #weights = df %>% filter(grade == 5) %>% select(peso),
+                 vcov = "hetero")
+
+etable(mat_dos,por_dos)
+
+etable(mat_dos, por_dos,
+       vcov = "hetero",
+       headers = list(":_:" = list("Matemática" = 1,"Português" = 1)),
+       file = "Z:/Tuffy/Paper - Educ/Resultados/Tabelas/Dosage_aluno/roberto_aluno_individuo_abbe.tex", replace = TRUE)
+
