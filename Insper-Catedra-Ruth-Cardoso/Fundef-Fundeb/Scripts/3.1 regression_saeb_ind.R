@@ -86,11 +86,21 @@ df <- df_saeb %>%
     mae_educ = as.numeric(mae_educ)
   ) %>% 
   mutate(age_exp = ifelse(treat_exp > 1, 1, treat_exp), #Based on Carrillo
-         anos_exp = ifelse(ano < 2007, 0, ano - 2007),
-         anos_exp = ifelse(grade == 9 & anos_exp > 0, anos_exp - 2, anos_exp),
-         peso = as.numeric(peso),
          
-         age_dist = ifelse(idade_aux == 0, 1, 0)
+         anos_exp = ano - 2007,
+         anos_exp = ifelse(grade == 9, anos_exp - 2, anos_exp), #Adjsutment for the 9th grade
+         
+         
+         peso = as.numeric(peso), #Weights
+         
+         age_late = case_when(
+           grade == 5 & idade > 10 ~ 1, #Is older than the ideal age
+           grade == 9 & idade > 14 ~ 1,  #Is older than the ideal age
+           TRUE ~ 0
+         ),
+         age_dist = ifelse(idade_aux == 0, 1, 0), #Age distortion
+         
+         post_treat = ifelse(ano > 2007, 1, 0)
          )
 
 
@@ -102,14 +112,14 @@ df <- df_saeb %>%
 # ------------------ #
 ### 2.1.1 Age exp ----
 
-main_mat <- feols(as.numeric(profic_mat) ~ dosage : age_exp
+main_mat <- feols(as.numeric(profic_mat) ~ dosage : age_exp : i(ano, ref = 2007)
                               + sexo + raca + mae_educ + PIBpc + idade #Controls
                               | codmun + ano + uf^ano, #FE
                               data = df %>% filter(grade == 5), #Only 5h grade
                               #weights = df_saeb$peso_5,
                               vcov = "hetero")
 
-main_pot <- feols(as.numeric(profic_port) ~ dosage : age_exp
+main_pot <- feols(as.numeric(profic_port) ~ dosage : age_exp : i(ano, ref = 2007)
                   + sexo + raca + mae_educ + PIBpc + idade #Controls
                   | codmun + ano + uf^ano, #FE
                   data = df %>% filter(grade == 5), #Only 5h grade
@@ -121,8 +131,8 @@ etable(main_mat, main_pot)
 
 etable(main_mat, main_pot,
        vcov = "hetero",
-       headers = list(":_:" = list("Matemática" = 1,"Português" = 1),
-                      file = "Z:/Tuffy/Paper - Educ/Resultados/Tabelas/Dosage/nvl_individuo_age_exp_agregado.tex", replace = TRUE))
+       headers = list(":_:" = list("Matemática" = 1,"Português" = 1)),
+       file = "Z:/Tuffy/Paper - Educ/Resultados/Tabelas/Dosage/nvl_individuo_age_exp_agregado.tex", replace = TRUE)
 
 
 
@@ -167,8 +177,8 @@ etable(main_mat, main_pot,
 
 etable(main_mat, main_pot,
        vcov = "hetero",
-       headers = list(":_:" = list("Matemática" = 1,"Português" = 1),
-       file = "Z:/Tuffy/Paper - Educ/Resultados/Tabelas/Dosage_aluno/nvl_individuo_anos_exp.tex", replace = TRUE))
+       headers = list(":_:" = list("Matemática" = 1,"Português" = 1)),
+       file = "Z:/Tuffy/Paper - Educ/Resultados/Tabelas/Dosage/nvl_individuo_anos_exp.tex", replace = TRUE)
 
 
 rm(main_mat, main_pot, sec_mat, sec_pot)
@@ -199,8 +209,8 @@ etable(main_mat, main_pot)
 
 etable(main_mat, main_pot,
        vcov = "hetero",
-       headers = list(":_:" = list("Matemática" = 1,"Português" = 1),
-                      file = "Z:/Tuffy/Paper - Educ/Resultados/Tabelas/Dosage_aluno/nvl_individuo_age_exp_agregado.tex", replace = TRUE))
+       headers = list(":_:" = list("Matemática" = 1,"Português" = 1)),
+       file = "Z:/Tuffy/Paper - Educ/Resultados/Tabelas/Dosage_aluno/nvl_individuo_age_exp_agregado.tex", replace = TRUE)
 
 
 
@@ -245,8 +255,8 @@ etable(main_mat, main_pot,
 
 etable(main_mat, main_pot,
        vcov = "hetero",
-       headers = list(":_:" = list("Matemática" = 1,"Português" = 1),
-                      file = "Z:/Tuffy/Paper - Educ/Resultados/Tabelas/Dosage_aluno/nvl_individuo_anos_exp.tex", replace = TRUE))
+       headers = list(":_:" = list("Matemática" = 1,"Português" = 1)),
+       file = "Z:/Tuffy/Paper - Educ/Resultados/Tabelas/Dosage_aluno/nvl_individuo_anos_exp.tex", replace = TRUE)
 
 
 rm(main_mat, main_pot, sec_mat, sec_pot)
@@ -262,7 +272,7 @@ rm(main_mat, main_pot, sec_mat, sec_pot)
 # ---------------- #
 ## 3.1 Dosage ----
 
-main_dist <- feols(as.numeric(age_dist) ~ dosage : i(anos_exp, ref = 0)
+main_dist <- feols(as.numeric(age_late) ~ dosage : i(anos_exp, ref = 0)
                   + sexo + raca + mae_educ + idade + PIBpc #Controls
                   | codmun + ano + uf^ano, #FE
                   data = df %>% filter(grade == 5), #Only 5h grade
@@ -270,11 +280,14 @@ main_dist <- feols(as.numeric(age_dist) ~ dosage : i(anos_exp, ref = 0)
                   vcov = "hetero")
 
 
-sec_dist <- feols(as.numeric(age_dist) ~ dosage : i(anos_exp, ref = 0)
+sec_dist <- feols(as.numeric(age_late) ~ dosage : i(anos_exp, ref = 0)
                  + sexo + raca + mae_educ + idade + PIBpc 
                  | codmun + ano + uf^ano,
                  data = df %>% filter(grade == 9),
                  #weights = df$peso,
                  vcov = "hetero")
 
-etable(main_dist, sec_dist)
+etable(main_dist, sec_dist,
+       vcov = "hetero",
+       headers = list(":_:" = list("5°Ano" = 1,"9°Ano" = 1)),
+       file = "Z:/Tuffy/Paper - Educ/Resultados/Tabelas/Dosage/dist_individuo_anos_exp.tex", replace = TRUE)
