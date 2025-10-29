@@ -76,7 +76,7 @@ path_list <- c("Z:/Arquivos IFB/Censo Escolar/MicrodCenso Escolar2005/DADOS/DADO
 
 #Loop for creating a database regarding each schools characteristics
 
-for(i in c(2005:2021)){
+for(i in c(2005:2019)){
   
   gc()
   message("Year: ",i)
@@ -85,7 +85,7 @@ for(i in c(2005:2021)){
   
   j <- i - 2004 #path index
   
-  
+  ##1.1 2005-2006 years ----
   if (i <= 2006){
     
     temp <- read_dta(path_list[j]) %>%
@@ -135,25 +135,25 @@ for(i in c(2005:2021)){
                            1, 0)
       ) %>% 
       select(c(1:9,53:62)) %>% 
-      rename(
-        ano = ANO,
-        school = MASCARA,
-        codmun = CODMUNIC
-      ) %>% 
-      select(-c(UF, SIGLA, DEP, LOC, CODFUNC)) %>% 
-      mutate( uf = codmun %/% 100000)
-    
-    
-    
+        rename(
+          ano = ANO,
+          school = MASCARA,
+          codmun = CODMUNIC
+        ) %>% 
+        select(-c(UF, SIGLA, DEP, LOC, CODFUNC, MUNIC, teacher)) %>% 
+        mutate( uf = codmun %/% 100000)
+      
+
+    # 1.2 2007-2018 years ----
   } else if(i %in% c(2007:2018)) {
     
-    temp <- read_dta(path_list[j]) %>%
+    temp <- read_dta(path_list[j]) #%>%
       filter(desc_situacao_funcionamento == "EM ATIVIDADE") %>% #Active Schools
       select(fk_cod_estado,
              fk_cod_municipio,
              ano_censo,
              id_dependencia_adm,
-             no_entidade,
+             pk_cod_entidade,
              
              #School characteristics
              id_sala_professor,          #Teacher's room
@@ -231,6 +231,7 @@ for(i in c(2005:2021)){
     message("Finishing data preparation for: ", i)
     
     
+    ## 1.3 2021 year ----
   } else if(i == 2021) {
     
     temp <- read.csv2(path_list[j]) #%>% 
@@ -311,7 +312,7 @@ for(i in c(2005:2021)){
     message("Successfully created reference dataframe")
   } else {
     data <- rbind(data, temp) %>% 
-      arrange(CODMUNIC,ANO,DEP)
+      arrange(codmun,ano)
     
     message("Successfull binding")
   }
@@ -331,5 +332,6 @@ for(i in c(2005:2021)){
 }
 rm(path_list)
 
-
+# 2. Saving data ----
 saveRDS(data, "Z:/Tuffy/Paper - Educ/Dados/censo_escolar_base.rds")
+
