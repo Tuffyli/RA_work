@@ -224,7 +224,7 @@ for(i in c(2005:2019)){
         uf = fk_cod_estado,
         codmun = fk_cod_municipio,
         ano = ano_censo,
-        school = no_entidade
+        school = pk_cod_entidade
       ) %>% 
       select( c(uf, codmun, ano, school, 25:35) ) #Final datafilter
     
@@ -334,5 +334,6 @@ rm(path_list)
 
 # 2. Saving data ----
 saveRDS(data, "Z:/Tuffy/Paper - Educ/Dados/censo_escolar_base.rds")
+
 
 
