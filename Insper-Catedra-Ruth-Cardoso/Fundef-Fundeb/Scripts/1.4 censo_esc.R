@@ -147,7 +147,7 @@ for(i in c(2005:2019)){
     # 1.2 2007-2018 years ----
   } else if(i %in% c(2007:2018)) {
     
-    temp <- read_dta(path_list[j]) #%>%
+    temp <- read_dta(path_list[j]) %>%
       filter(desc_situacao_funcionamento == "EM ATIVIDADE") %>% #Active Schools
       select(fk_cod_estado,
              fk_cod_municipio,
@@ -305,7 +305,7 @@ for(i in c(2005:2019)){
     
   }
   
-  #Binding itno a single dataframe
+  #Binding into a single dataframe
   if(i == 2005){
     data <- temp
     
@@ -334,4 +334,5 @@ rm(path_list)
 
 # 2. Saving data ----
 saveRDS(data, "Z:/Tuffy/Paper - Educ/Dados/censo_escolar_base.rds")
+
 
