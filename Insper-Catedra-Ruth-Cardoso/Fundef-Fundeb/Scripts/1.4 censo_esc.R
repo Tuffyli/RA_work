@@ -44,7 +44,7 @@ library(ggplot2)
 options(scipen = 999)
 
 # ---------------------------------------------------------------------------- #
-# 1. School data ----
+#  School data ----
 # ---------------------------------------------------------------------------- #
 
 #' ***************************************************************************
@@ -75,8 +75,8 @@ path_list <- c("Z:/Arquivos IFB/Censo Escolar/MicrodCenso Escolar2005/DADOS/DADO
 )
 
 #Loop for creating a database regarding each schools characteristics
-
-for(i in c(2005:2019)){
+#1. Loop -----
+for(i in c(2005:2018)){
   
   gc()
   message("Year: ",i)
@@ -134,7 +134,7 @@ for(i in c(2005:2019)){
         inclusion = ifelse(ESP_EXCL == "s" | ESP_T_ES == "s" | ENS_INCL == "s",
                            1, 0)
       ) %>% 
-      select(c(1:9,53:62)) %>% 
+      select(c(1:9,53:64)) %>% 
         rename(
           ano = ANO,
           school = MASCARA,
@@ -144,11 +144,31 @@ for(i in c(2005:2019)){
         mutate( uf = codmun %/% 100000)
       
 
-    # 1.2 2007-2018 years ----
-  } else if(i %in% c(2007:2018)) {
+    # 1.2 2007-2014 years ----
+  } else if(i %in% c(2007:2014)) {
     
     temp <- read_dta(path_list[j]) %>%
-      filter(desc_situacao_funcionamento == "EM ATIVIDADE") %>% #Active Schools
+      rename_all(tolower) 
+    
+          if (i %in% c(2011:2014)){ #Valid for this years specific variables constructions
+            temp <- temp %>% 
+              mutate(id_quadra_esportes = ifelse(id_quadra_esportes_coberta == 1 |
+                                                   id_quadra_esportes_descoberta == 1,
+                                                 1, 0)) %>% 
+              filter(desc_situacao_funcionamento == 1)
+            
+            #For 2008-2010 the sports court code remains the same as 2007
+          } else if (i %in% c(2008:2010)) { #2008 is the first year to present the change in notation
+            
+            temp <- temp %>%
+              filter(desc_situacao_funcionamento == 1)
+            
+          } else {
+            temp <- temp %>% #Exclusive for 2007
+              filter(desc_situacao_funcionamento == "EM ATIVIDADE") #Active Schools
+          } 
+    
+    temp <- temp %>% 
       select(fk_cod_estado,
              fk_cod_municipio,
              ano_censo,
@@ -177,8 +197,7 @@ for(i in c(2005:2019)){
              id_reg_medio_medio,
              id_reg_medio_normal,        #Highschool
              id_reg_medio_prof,
-             id_mod_ens_esp              #Special
-             
+             id_mod_ens_esp 
       ) %>% 
       filter(id_dependencia_adm == 3)
     
@@ -228,84 +247,329 @@ for(i in c(2005:2019)){
       ) %>% 
       select( c(uf, codmun, ano, school, 25:35) ) #Final datafilter
     
+    
+    
+    
+    ###1.2.1 2008
+    
+    
+    
     message("Finishing data preparation for: ", i)
     
     
-    ## 1.3 2021 year ----
-  } else if(i == 2021) {
-    
-    temp <- read.csv2(path_list[j]) #%>% 
-     test <- temp %>%  select(NU_ANO_CENSO,
-             CO_UF,
-             CO_MUNICIPIO,
-             CO_ENTIDADE,
-             TP_DEPENDENCIA,
-             
-             IN_SALA_PROFESSOR,           #Teacher's room
-             IN_LABORATORIO_CIENCIAS,     #Science Lab
-             IN_LABORATORIO_INFORMATICA, #Computer Lab
-             IN_QUADRA_ESPORTES,          #Court
-             IN_PARQUE_INFANTIL,          #Playground
-             IN_BIBLIOTECA,               #Libary
-             QT_SALAS_EXISTENTES,         #Classrooms
-             QT_SALAS_UTILIZADAS,
-             QT_FUNCIONARIOS,             #Employee
-             IN_ALIMENTACAO,              #Lunch
-             
-             IN_INF,                      #Kindergarden
-             IN_FUND,                     #Elementary
-             IN_MED,                      #Highschool
-             IN_ESP                       #Special
-             
-             ) %>% 
-       filter(TP_DEPENDENCIA == 3) %>% 
-       mutate(
-         
-         #School characteristics variables
-         classroom = ifelse(!is.na(QT_SALAS_UTILIZADAS),
-                            as.numeric(QT_SALAS_UTILIZADAS), NA), 
-         
-         teach_room = as.numeric(IN_SALA_PROFESSOR),
-         
-         lab_dummy = ifelse(IN_LABORATORIO_INFORMATICA == 1 |
-                              IN_LABORATORIO_CIENCIAS == 1, 1, 0),
-         
-         lib_dummy = as.numeric(IN_BIBLIOTECA),
-         
-         play_area = ifelse(IN_PARQUE_INFANTIL == 1 |
-                              IN_QUADRA_ESPORTES == 1, 1, 0),
-         
-         lunch = as.numeric(IN_ALIMENTACAO),
-         
-         employee = ifelse(!is.na(QT_FUNCIONARIOS),
-                           as.numeric(QT_FUNCIONARIOS), NA),
-         
-         #teacher = as.numeric(PROFESS), #Not present in this data frame.
-         
-         #Education levels
-         kinder = as.numeric(IN_INF),
-         
-         elementary = as.numeric(IN_FUND),
-         
-         high = as.numeric(IN_MED),
-         
-         inclusion = as.numeric(IN_ESP)
-       ) %>% 
-       rename(
-         uf = CO_UF,
-         codmun = CO_MUNICIPIO,
-         ano = NU_ANO_CENSO,
-         school = CO_ENTIDADE
-       ) %>% 
-       select( c(uf, codmun, ano, school, 20:30) ) #Final datafilter
     
     
+  } else if(i %in% c(2015:2020)) {
+    ## 1.3 2015 - 2020 year ----
+
+    temp <- read_dta(path_list[j]) %>% 
+      rename_all(tolower) %>%
+      filter(tp_situacao_funcionamento == 1) 
     
-    message("Finishing data preparation for ", i)
-    
+    ### 1.3.1 2015 - 2017 ----
+       if(i %in% c(2015:2017)) {
+          
+          temp <- temp %>% 
+            select(nu_ano_censo,
+                   co_uf,
+                   co_municipio,
+                   co_entidade,
+                   tp_dependencia,
+                   
+                   in_sala_professor,           #Teacher's room
+                   in_laboratorio_ciencias,     #Science Lab
+                   in_laboratorio_informatica, #Computer Lab
+                   in_quadra_esportes,          #Court
+                   in_parque_infantil,          #Playground
+                   in_biblioteca,               #Libary
+                   nu_salas_existentes,         #Classrooms
+                   nu_salas_utilizadas,
+                   nu_funcionarios,             #Employee
+                   in_alimentacao,              #Lunch
+                   
+                   in_comum_creche,             #Kindergarden
+                   in_comum_pre,
+                   in_comum_fund_ai,            #Elementary
+                   in_comum_fund_af,
+                   in_comum_medio_medio,        #Highschool
+                   in_comum_medio_integrado,
+                   in_comum_medio_normal,
+                   in_especial_exclusiva        #Special
+                   
+            ) %>% 
+            filter(tp_dependencia == 3) %>% 
+            mutate(
+              
+              #School characteristics variables
+              classroom = ifelse(!is.na(nu_salas_existentes),
+                                 as.numeric(nu_salas_existentes), NA), 
+              
+              teach_room = as.numeric(in_sala_professor),
+              
+              lab_dummy = ifelse(in_laboratorio_informatica == 1 |
+                                   in_laboratorio_ciencias == 1, 1, 0),
+              
+              lib_dummy = as.numeric(in_biblioteca),
+              
+              play_area = ifelse(in_parque_infantil == 1 |
+                                   in_quadra_esportes == 1, 1, 0),
+              
+              lunch = as.numeric(in_alimentacao),
+              
+              employee = ifelse(!is.na(nu_funcionarios),
+                                as.numeric(nu_funcionarios), NA),
+              
+              #teacher = as.numeric(PROFESS), #Not present in this data frame.
+              
+              #Education levels
+              kinder = ifelse(in_comum_creche == 1 |
+                                in_comum_pre == 1, 1, 0),
+              
+              elementary = ifelse(in_comum_fund_ai == 1 | in_comum_fund_af == 1, 1, 0),
+              
+              high = ifelse(in_comum_medio_medio == 1 | in_comum_medio_integrado == 1 |
+                              in_comum_medio_normal == 1, 1, 0),
+              
+              inclusion = ifelse(in_especial_exclusiva == 1, 1, 0)
+            ) %>% 
+            rename(
+              uf = co_uf,
+              codmun = co_municipio,
+              ano = nu_ano_censo,
+              school = co_entidade
+            ) %>% 
+            select( c(uf, codmun, ano, school, 24:34) ) #Final datafilter'
+          
+          
+        } else if(i %in% c(2018:2020)) {
+      ### 1.3.2 2018 ----
+      
+          if(i == 2018) {
+                temp <- temp %>% 
+                  select(nu_ano_censo,
+                         co_uf,
+                         co_municipio,
+                         co_entidade,
+                         tp_dependencia,
+                         
+                         in_sala_professor,           #Teacher's room
+                         in_laboratorio_ciencias,     #Science Lab
+                         in_laboratorio_informatica, #Computer Lab
+                         in_quadra_esportes,          #Court
+                         in_parque_infantil,          #Playground
+                         in_biblioteca,               #Libary
+                         qt_salas_existentes,         #Classrooms
+                         qt_salas_utilizadas,
+                         qt_funcionarios,             #Employee
+                         in_alimentacao,              #Lunch
+                         
+                         in_comum_creche,             #Kindergarden
+                         in_comum_pre,
+                         in_comum_fund_ai,            #Elementary
+                         in_comum_fund_af,
+                         in_comum_medio_medio,        #Highschool
+                         in_comum_medio_integrado,
+                         in_comum_medio_normal,
+                         in_especial_exclusiva        #Special
+                         
+                  ) %>% 
+                  filter(tp_dependencia == 3) %>% 
+                  mutate(
+                    
+                    #School characteristics variables
+                    classroom = ifelse(!is.na(qt_salas_existentes),
+                                       as.numeric(qt_salas_existentes), NA), 
+                    
+                    teach_room = as.numeric(in_sala_professor),
+                    
+                    lab_dummy = ifelse(in_laboratorio_informatica == 1 |
+                                         in_laboratorio_ciencias == 1, 1, 0),
+                    
+                    lib_dummy = as.numeric(in_biblioteca),
+                    
+                    play_area = ifelse(in_parque_infantil == 1 |
+                                         in_quadra_esportes == 1, 1, 0),
+                    
+                    lunch = as.numeric(in_alimentacao),
+                    
+                    employee = ifelse(!is.na(qt_funcionarios),
+                                      as.numeric(qt_funcionarios), NA),
+                    
+                    #teacher = as.numeric(PROFESS), #Not present in this data frame.
+                    
+                    #Education levels
+                    kinder = ifelse(in_comum_creche == 1 |
+                                      in_comum_pre == 1, 1, 0),
+                    
+                    elementary = ifelse(in_comum_fund_ai == 1 | in_comum_fund_af == 1, 1, 0),
+                    
+                    high = ifelse(in_comum_medio_medio == 1 | in_comum_medio_integrado == 1 |
+                                    in_comum_medio_normal == 1, 1, 0),
+                    
+                    inclusion = ifelse(in_especial_exclusiva == 1, 1, 0)
+                  ) %>% 
+                  rename(
+                    uf = co_uf,
+                    codmun = co_municipio,
+                    ano = nu_ano_censo,
+                    school = co_entidade
+                  ) %>% 
+                  select( c(uf, codmun, ano, school, 24:34) ) #Final datafilter'
+                
+                } else if(i %in% c(2019:2020)){
+        ### 1.3.3 2019 - 2020 ----
+          
+                  temp <- temp %>% 
+                    select(nu_ano_censo,
+                           co_uf,
+                           co_municipio,
+                           co_entidade,
+                           tp_dependencia,
+                           
+                           in_sala_professor,           #Teacher's room
+                           in_laboratorio_ciencias,     #Science Lab
+                           in_laboratorio_informatica, #Computer Lab
+                           in_quadra_esportes,          #Court
+                           in_parque_infantil,          #Playground
+                           in_biblioteca,               #Libary
+                           qt_salas_utilizadas,         #Classrooms
+                           151:163,                     #Employee
+                           in_alimentacao,              #Lunch
+                           
+                           in_comum_creche,             #Kindergarden
+                           in_comum_pre,
+                           in_comum_fund_ai,            #Elementary
+                           in_comum_fund_af,
+                           in_comum_medio_medio,        #Highschool
+                           in_comum_medio_integrado,
+                           in_comum_medio_normal,
+                           in_especial_exclusiva        #Special
+                           
+                    ) %>% 
+                    filter(tp_dependencia == 3) %>% 
+                    mutate(
+                      
+                      #School characteristics variables
+                      classroom = ifelse(!is.na(qt_salas_utilizadas),
+                                         as.numeric(qt_salas_utilizadas), NA), 
+                      
+                      teach_room = as.numeric(in_sala_professor),
+                      
+                      lab_dummy = ifelse(in_laboratorio_informatica == 1 |
+                                           in_laboratorio_ciencias == 1, 1, 0),
+                      
+                      lib_dummy = as.numeric(in_biblioteca),
+                      
+                      play_area = ifelse(in_parque_infantil == 1 |
+                                           in_quadra_esportes == 1, 1, 0),
+                      
+                      lunch = as.numeric(in_alimentacao),
+                      
+                      
+                      #teacher = as.numeric(PROFESS), #Not present in this data frame.
+                      
+                      #Education levels
+                      kinder = ifelse(in_comum_creche == 1 |
+                                        in_comum_pre == 1, 1, 0),
+                      
+                      elementary = ifelse(in_comum_fund_ai == 1 | in_comum_fund_af == 1, 1, 0),
+                      
+                      high = ifelse(in_comum_medio_medio == 1 | in_comum_medio_integrado == 1 |
+                                      in_comum_medio_normal == 1, 1, 0),
+                      
+                      inclusion = ifelse(in_especial_exclusiva == 1, 1, 0)
+                    ) %>% 
+                    rename(
+                      uf = co_uf,
+                      codmun = co_municipio,
+                      ano = nu_ano_censo,
+                      school = co_entidade
+                    ) %>% 
+                    mutate(employee = rowSums(across(
+                      c(qt_prof_administrativo, qt_prof_servicos_gerais,
+                        qt_prof_bilbiotecario, qt_prof_saude,
+                        qt_prof_coordenador, qt_prof_fonoaudiologo,
+                        qt_prof_nutricionista, qt_prof_psicologo,
+                        qt_prof_alimentacao, qt_prof_pedagogia,
+                        qt_prof_secretario, qt_prof_seguranca,
+                        qt_prof_minitores),
+                      na.rm = TRUE
+                    ))) %>%
+                    select( c(uf, codmun, ano, school, 24:34) )
+                  } else {
+    ## 1.4 2021 ----
+    temp <- read.csv2(path_list[j]) %>% 
+      test <- temp %>%  select(NU_ANO_CENSO,
+                               CO_UF,
+                               CO_MUNICIPIO,
+                               CO_ENTIDADE,
+                               TP_DEPENDENCIA,
+                               
+                               IN_SALA_PROFESSOR,           #Teacher's room
+                               IN_LABORATORIO_CIENCIAS,     #Science Lab
+                               IN_LABORATORIO_INFORMATICA, #Computer Lab
+                               IN_QUADRA_ESPORTES,          #Court
+                               IN_PARQUE_INFANTIL,          #Playground
+                               IN_BIBLIOTECA,               #Libary
+                               QT_SALAS_EXISTENTES,         #Classrooms
+                               QT_SALAS_UTILIZADAS,
+                               QT_FUNCIONARIOS,             #Employee
+                               IN_ALIMENTACAO,              #Lunch
+                               
+                               IN_INF,                      #Kindergarden
+                               IN_FUND,                     #Elementary
+                               IN_MED,                      #Highschool
+                               IN_ESP                       #Special
+                               
+      ) %>% 
+        filter(TP_DEPENDENCIA == 3) %>% 
+        mutate(
+          
+          #School characteristics variables
+          classroom = ifelse(!is.na(QT_SALAS_UTILIZADAS),
+                             as.numeric(QT_SALAS_UTILIZADAS), NA), 
+          
+          teach_room = as.numeric(IN_SALA_PROFESSOR),
+          
+          lab_dummy = ifelse(IN_LABORATORIO_INFORMATICA == 1 |
+                               IN_LABORATORIO_CIENCIAS == 1, 1, 0),
+          
+          lib_dummy = as.numeric(IN_BIBLIOTECA),
+          
+          play_area = ifelse(IN_PARQUE_INFANTIL == 1 |
+                               IN_QUADRA_ESPORTES == 1, 1, 0),
+          
+          lunch = as.numeric(IN_ALIMENTACAO),
+          
+          employee = ifelse(!is.na(QT_FUNCIONARIOS),
+                            as.numeric(QT_FUNCIONARIOS), NA),
+          
+          #teacher = as.numeric(PROFESS), #Not present in this data frame.
+          
+          #Education levels
+          kinder = as.numeric(IN_INF),
+          
+          elementary = as.numeric(IN_FUND),
+          
+          high = as.numeric(IN_MED),
+          
+          inclusion = as.numeric(IN_ESP)
+        ) %>% 
+        rename(
+          uf = CO_UF,
+          codmun = CO_MUNICIPIO,
+          ano = NU_ANO_CENSO,
+          school = CO_ENTIDADE
+        ) %>% 
+        select( c(uf, codmun, ano, school, 20:30) ) #Final datafilter
+      
+      
+                  } 
+          }
+      message("Finishing data preparation for ", i)
   }
   
-  #Binding into a single dataframe
+  #Binding itno a single dataframe
   if(i == 2005){
     data <- temp
     
@@ -315,6 +579,7 @@ for(i in c(2005:2019)){
       arrange(codmun,ano)
     
     message("Successfull binding")
+    message("Total years in final data frame: ", paste(unique(data$ano), collapse = ", "))
   }
   
   fim <- Sys.time()
@@ -334,6 +599,4 @@ rm(path_list)
 
 # 2. Saving data ----
 saveRDS(data, "Z:/Tuffy/Paper - Educ/Dados/censo_escolar_base.rds")
-
-
 
