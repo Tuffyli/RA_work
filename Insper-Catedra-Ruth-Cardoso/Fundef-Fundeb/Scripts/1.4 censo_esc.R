@@ -2,7 +2,7 @@
 # Data Extraction
 # DataBase adjustment
 # Last edited by: Tuffy Licciardi Issa
-# Date: 29/10/2025
+# Date: 31/10/2025
 # ---------------------------------------------------------------------------- #
 
 # ---------------------------------------------------------------------------- #
@@ -104,7 +104,9 @@ for(i in c(2005:2018)){
                228:241,  #Teacher's especiality
                PARQ_INF, #Playground
                QUAD_DES, #Court
-               QUAD_COB #Covered court
+               QUAD_COB  #Covered court
+               
+              
                )
       ) %>% 
       filter(DEP == "Municipal", # Removes Federal and Private Schools
@@ -133,6 +135,12 @@ for(i in c(2005:2018)){
         high = ifelse(NIVELMED == "s", 1, 0),
         inclusion = ifelse(ESP_EXCL == "s" | ESP_T_ES == "s" | ENS_INCL == "s",
                            1, 0)
+        
+        # eja = ifelse(SUPL_AVA == "s" |
+        #                SUPL_SAVA == "s", 1, 0),
+
+        
+
       ) %>% 
       select(c(1:9,53:64)) %>% 
         rename(
@@ -599,4 +607,188 @@ rm(path_list)
 
 # 2. Saving data ----
 saveRDS(data, "Z:/Tuffy/Paper - Educ/Dados/censo_escolar_base.rds")
+
+rm(data)
+
+# ---------------------------------------------------------------------------- #
+# 3. Extracting total enrollments per school ----
+# ---------------------------------------------------------------------------- #
+
+path_list <- c("Z:/Arquivos IFB/Censo Escolar/MicrodCenso Escolar2005/DADOS/DADOS_CENSOESC.dta",
+               "Z:/Arquivos IFB/Censo Escolar/MicrodCenso Escolar2006/DADOS/DADOS_CENSOESC.dta",
+               "Z:/Arquivos IFB/Censo Escolar/Situação do Aluno/Dados RDS/ts_censo_basico_situacao_2007.rds",
+               "Z:/Arquivos IFB/Censo Escolar/Situação do Aluno/Dados RDS/ts_censo_basico_situacao_2008.rds",
+               "Z:/Arquivos IFB/Censo Escolar/Situação do Aluno/Dados RDS/ts_censo_basico_situacao_2009.rds",
+               "Z:/Arquivos IFB/Censo Escolar/Situação do Aluno/Dados RDS/ts_censo_basico_situacao_2010.rds",
+               "Z:/Arquivos IFB/Censo Escolar/Situação do Aluno/Dados RDS/ts_censo_basico_situacao_2011.rds",
+               "Z:/Arquivos IFB/Censo Escolar/Situação do Aluno/Dados RDS/ts_censo_basico_situacao_2012.rds",                          "Z:/Arquivos IFB/Censo Escolar/Situação do Aluno/Dados RDS/ts_censo_basico_situacao_2013.rds",
+               "Z:/Arquivos IFB/Censo Escolar/Situação do Aluno/Dados RDS/ts_censo_basico_situacao_2014.rds",
+               "Z:/Arquivos IFB/Censo Escolar/Situação do Aluno/Dados RDS/ts_censo_basico_situacao_2015.rds",
+               "Z:/Arquivos IFB/Censo Escolar/Situação do Aluno/Dados RDS/ts_censo_basico_situacao_2016.rds",
+               "Z:/Arquivos IFB/Censo Escolar/Situação do Aluno/Dados RDS/ts_censo_basico_situacao_2017.rds",
+               "Z:/Arquivos IFB/Censo Escolar/Situação do Aluno/Dados RDS/ts_censo_basico_situacao_2018.rds",
+               "Z:/Arquivos IFB/Censo Escolar/Situação do Aluno/Dados RDS/ts_censo_basico_situacao_2019.rds",
+               "Z:/Arquivos IFB/Censo Escolar/Situação do Aluno/Dados RDS/ts_censo_basico_situacao_2020.rds",
+               "Z:/Arquivos IFB/Censo Escolar/MicrodCenso Escolar2021/2021/dados/microdados_ed_basica_2021.csv"
+               )
+
+for (i in c(2005:2018)) {
+  
+  
+  gc()
+  message("Year: ",i)
+  
+  ini <- Sys.time()
+  
+  j <- i - 2004 #path index
+  
+  if (i <= 2006){
+    ## 3.1 2005 - 2006 ----
+    
+    temp <- read_dta(path_list[j]) %>%
+      select(c(1:24,
+               SAL_DE_P, #Teacher's room
+               PERMANEN, #Classroom
+               LAB_INFO, #Computer Lab
+               LAB_CIEN, #Science Lab
+               LAB_OUTR, #Other Lab
+               BIBLIO,   #Library
+               FUNCION,  #Employee
+               PROFESS,  #Teachers
+               MERE_ESC, #Lunch
+               AUX_CRECHE, #Auxiliar at Kindergarden
+               AUX_PRE,  #Auxiliar at Kindergarden
+               228:241,  #Teacher's especiality
+               PARQ_INF, #Playground
+               QUAD_DES, #Court
+               QUAD_COB,  #Covered court
+
+               #For the Enrollments
+               DEF11C:DEF11F, NEF11C:NEF11F, # EF iniciais (8 anos)
+               DE9F11C:DE9F11G, NE9F11C:NE9F11G, # EF iniciais (9 anos)
+               DEF11G:DEF11J, NEF11G:NEF11J, # EF finais (8 anos)
+               DE9F11H:DE9F11N, NE9F11H:NE9F11N, # EF finais (9 anos)
+               VEE1431:VEE1437, # Alunos de educação especial do EF por ano de nascimento
+
+               #ED especial por série:
+               VEE1619:VEE1691, VEE1719:VEE1791, VEE1819:VEE1891, VEE1919:VEE1991, # 1ºEF
+               VEE1612:VEE1692, VEE1712:VEE1792, VEE1812:VEE1892, VEE1912:VEE1992, # 2ºEF
+               VEE1613:VEE1693, VEE1713:VEE1793, VEE1813:VEE1893, VEE1913:VEE1993, # 3ºEF
+               VEE1614:VEE1694, VEE1714:VEE1794, VEE1814:VEE1894, VEE1914:VEE1994, # 4ºEF
+               VEE1615:VEE1695, VEE1715:VEE1795, VEE1815:VEE1895, VEE1915:VEE1995, # 5ºEF
+               VEE1616:VEE1696, VEE1716:VEE1796, VEE1816:VEE1896, VEE1916:VEE1996, # 6ºEF
+               VEE1617:VEE1697, VEE1717:VEE1797, VEE1817:VEE1897, VEE1917:VEE1997, # 7ºEF
+               VEE1618:VEE1698, VEE1718:VEE1798, VEE1818:VEE1898, VEE1918:VEE1998, # 8ºEF
+
+               DEM118, DEM119, DEM11A, DEM11B, DEM11C, #Highschool
+               NEM118, NEM119, NEM11A, NEM11B, NEM11C,
+               DPE119, NPE119,                         #Preschool
+               DPE11D, NPE11D,
+               DES101F:DES101A, NES101F:NES101A        #EJA
+      )
+      ) %>%
+      filter(DEP == "Municipal", # Removes Federal and Private Schools
+             CODFUNC == "Ativo") %>%  # Removes deactivated schools
+      mutate(
+        CODMUNIC = as.numeric(str_c( #concatenates
+          str_sub(as.character(CODMUNIC), 1, 2), #only first two strings
+          str_sub(as.character(CODMUNIC), -5))),
+
+        #School characteristics variables
+        classroom = as.numeric(PERMANEN),
+        teach_room = ifelse(SAL_DE_P == "s", 1, 0),
+        lab_dummy = ifelse(LAB_INFO == "s" | LAB_CIEN == "s" | LAB_OUTR == "s",
+                           1, 0),
+        lib_dummy = ifelse(BIBLIO == "s", 1, 0),
+        play_area = ifelse(PARQ_INF == "s"| QUAD_DES == "s" | QUAD_COB == "s",
+                           1, 0),
+        lunch = ifelse(MERE_ESC == "s", 1, 0),
+        employee = as.numeric(FUNCION),
+        teacher = as.numeric(PROFESS),
+
+        #Education levels
+        kinder = ifelse(NIVELCRE == "s" | NIVELPRE == "s" , 1, 0),
+        elementary = ifelse(NIV_F1A4_8 == "s" | NIV_F5A8_8 == "s" | NIV_F9FIM == "s" |
+                              NIV_F9INI == "s", 1, 0),
+        high = ifelse(NIVELMED == "s", 1, 0),
+        inclusion = ifelse(ESP_EXCL == "s" | ESP_T_ES == "s" | ENS_INCL == "s",
+                           1, 0),
+
+        eja = ifelse(SUPL_AVA == "s" |
+                       SUPL_SAVA == "s", 1, 0),
+
+        eg_in = rowSums(across(c(DEF11C:NE9F11G)), na.rm = TRUE), # Contando EF de 8 e 9 anos!
+        reg_fin = rowSums(across(c(DEF11G:NE9F11N)), na.rm = TRUE),
+
+        ef_tot = reg_in + ref_fin,
+        esp_tot = rowSums(across(c(VEE1431:VEE1437)), na.rm = TRUE),
+        em_tot = rowSums(across(c(DEM118:NEM11C)), na.rm = TRUE),
+        ed_inf_tot = rowSums(across(c(DPE119:NPE11D)), na.rm = TRUE),
+        eja_tot = rowSums(across(c(DES101F:NES101A)), na.rm = TRUE),
+
+
+      ) %>%
+      select(c(1:9,53:65, ef_tot:eja_tot)) %>%
+      rename(
+        ano = ANO,
+        school = MASCARA,
+        codmun = CODMUNIC
+      ) %>%
+      select(-c(UF, SIGLA, DEP, LOC, CODFUNC, MUNIC, teacher)) %>%
+      mutate( uf = codmun %/% 100000)
+    
+    
+  } else {
+    ##3.2 2007 - 2018 ----  
+    
+    temp <- readRDS(path_list[j]) %>% 
+      select(co_uf,
+             co_municipio,
+             nu_ano_censo,
+             tp_etapa_ensino,
+             tp_dependencia,
+             co_entidade
+      ) %>% 
+      filter(tp_dependencia %in% c(2,3),
+             tp_etapa_ensino %in% c(41, 18, 11, 7))
+    
+    message("Base aberta para o ano: ", i)
+    
+    }
+  
+
+  
+  # ------------------------------------------------------------ #
+  #Binding itno a single dataframe
+  if(i == 2005){
+    data <- temp
+    
+    message("Successfully created reference dataframe")
+  } else {
+    data <- rbind(data, temp) %>% 
+      arrange(codmun,ano)
+    
+    message("Successfull binding")
+    message("Total years in final data frame: ", paste(unique(data$ano), collapse = ", "))
+  }
+  
+  fim <- Sys.time()
+  
+  
+  delta <- difftime(fim, ini, units = "secs")
+  mins <- floor(as.numeric(delta) / 60)
+  secs <- round(as.numeric(delta) %% 60)
+  
+  message("---------------------------------------------")
+  message("Total time elapsed: ",mins," mins e ", secs, " s")
+  message("---------------------------------------------")
+  
+  rm(temp, delta, ini, fim, temp, mins, secs, i, j)
+  
+  
+  
+  }
+
+
+
 

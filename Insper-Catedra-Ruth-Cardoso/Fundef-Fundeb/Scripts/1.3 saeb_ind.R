@@ -179,9 +179,10 @@ for (idx in seq(1, length(paths_list), by = 2)) {
         codmun = ifelse(serie == 8, codmun[serie == 4], codmun)
       ) %>% 
       ungroup() %>% 
-      select(-c(municipio, municipio_codmunic, nome_esc, cod_escola, disc, dep_admin)) %>% 
+      select(-c(municipio, municipio_codmunic, nome_esc, disc, dep_admin)) %>% 
       mutate( #Other control variables
         
+        cod_escola = as.character(cod_escola),
         sexo = as.character(sexo),
         raca = as.character(raca),
         mae_educ = as.character(mae_educ),
@@ -199,7 +200,7 @@ for (idx in seq(1, length(paths_list), by = 2)) {
       
     df_bind <- df2 %>% 
       left_join(df1 %>% #Grades dataset
-                  select(id_aluno,id_serie, NU_THETAT_L, NU_THETAT_M) %>% 
+                  select(id_aluno,id_serie, PK_COD_ENTIDADE, NU_THETAT_L, NU_THETAT_M) %>% 
                   rename(profic_mat = NU_THETAT_M,
                          profic_port = NU_THETAT_L),
                 by = c("id_aluno", "id_serie")
@@ -207,8 +208,9 @@ for (idx in seq(1, length(paths_list), by = 2)) {
       filter(id_dependencia_adm == 3) %>% #Municipal Schools
       
       select(id_serie, id_municipio, id_uf,q_al1, q_al2, q_al4, q_al19, profic_mat,
-             profic_port, id_aluno) %>% 
+             profic_port, id_aluno, PK_COD_ENTIDADE) %>% 
       rename(
+        cod_escola = PK_COD_ENTIDADE,
         sexo = q_al1,
         raca = q_al2, 
         idade = q_al4,
@@ -292,7 +294,7 @@ for (idx in seq(1, length(paths_list), by = 2)) {
     #Combined data
     df_bind <- df2 %>% 
       left_join(df1 %>% #Grades dataset
-                  select(ID_ALUNO,ID_SERIE, NU_THETAT_L, NU_THETAT_M) %>% 
+                  select(ID_ALUNO,ID_SERIE, NU_THETAT_L, NU_THETAT_M, PK_COD_ENTIDADE) %>% 
                   rename(profic_mat = NU_THETAT_M,
                          profic_port = NU_THETAT_L),
                 by = c("ID_ALUNO", "ID_SERIE")
@@ -300,8 +302,9 @@ for (idx in seq(1, length(paths_list), by = 2)) {
       filter(ID_DEPENDENCIA_ADM == 3)  %>% #Municipal Schools
       
       select(ID_ALUNO,ID_SERIE, COD_MUNICIPIO, SIGLA_UF ,Q1, Q2, Q4, Q19, profic_mat,
-             profic_port) %>% 
+             profic_port, PK_COD_ENTIDADE) %>% 
       rename(
+        cod_escola = PK_COD_ENTIDADE,
         sexo = Q1,
         raca = Q2, 
         idade = Q4,
@@ -374,8 +377,10 @@ for (idx in seq(1, length(paths_list), by = 2)) {
                   select(id_municipio, id_aluno, id_serie, proficiencia_lp_saeb, proficiencia_mt_saeb),
                 by = c("id_municipio", "id_aluno", "id_serie")) %>% 
       select(id_aluno,id_serie, id_municipio, id_uf,  tx_resp_q001, tx_resp_q002,
-             tx_resp_q004, tx_resp_q019, proficiencia_lp_saeb, proficiencia_mt_saeb) %>% 
+             tx_resp_q004, tx_resp_q019, proficiencia_lp_saeb, proficiencia_mt_saeb,
+             id_escola) %>% 
       rename(
+        cod_escola = id_escola,
         profic_port = proficiencia_lp_saeb,
         profic_mat = proficiencia_mt_saeb,
         sexo = tx_resp_q001,
@@ -442,22 +447,23 @@ for (idx in seq(1, length(paths_list), by = 2)) {
       
     df1 <- df1 %>% 
       filter(id_dependencia_adm == 3) %>% #Municipal Schools
-      select(id_aluno,id_serie, id_municipio, id_uf,  tx_resp_q001, tx_resp_q002,
+      select(id_aluno,id_serie, id_municipio, id_uf, tx_resp_q001, tx_resp_q002,
              tx_resp_q004, tx_resp_q019, proficiencia_lp_saeb, proficiencia_mt_saeb,
-             peso_aluno_lp, peso_aluno_mt) 
+             peso_aluno_lp, peso_aluno_mt, id_escola) 
     
     
     df2 <- df2 %>% 
       filter(id_dependencia_adm == 3) %>% #Municipal Schools
       select(id_aluno,id_serie, id_municipio, id_uf,  tx_resp_q001, tx_resp_q002,
              tx_resp_q004, tx_resp_q019, proficiencia_lp_saeb, proficiencia_mt_saeb,
-             peso_aluno_lp, peso_aluno_mt) 
+             peso_aluno_lp, peso_aluno_mt, id_escola) 
     
     
     
     #Binding both datasets
     df_bind <- rbind(df1,df2) %>% 
       rename(
+        cod_escola = id_escola,
         profic_port = proficiencia_lp_saeb,
         profic_mat = proficiencia_mt_saeb,
         sexo = tx_resp_q001,
@@ -643,7 +649,8 @@ for (idx in seq(1, length(paths_list), by = 2)) {
 
   } else {
     
-    df_final <- rbind(df_final, df_bind)
+    df_final <- rbind(df_final, df_bind) %>% 
+      mutate(treat_exp = ifelse(treat_exp > 1, 1, treat_exp))
   
   }
   
